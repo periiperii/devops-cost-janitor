@@ -8,7 +8,6 @@ on:
   pull_request:
 
 jobs:
-
   janitor-scan:
 
     runs-on: ubuntu-latest
@@ -40,8 +39,7 @@ jobs:
             localstack/localstack:3.5
 
       - name: Wait For LocalStack
-        run: |
-          sleep 15
+        run: sleep 15
 
       - name: Terraform Init
         run: |
