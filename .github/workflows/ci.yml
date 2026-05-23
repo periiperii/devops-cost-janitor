@@ -1,0 +1,71 @@
+name: DevOps Cost Janitor CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+jobs:
+
+  janitor-scan:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Python Dependencies
+        run: |
+          cd janitor
+          pip install -r requirements.txt
+
+      - name: Set Up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Start LocalStack
+        run: |
+          docker run -d \
+            -p 4566:4566 \
+            -e SERVICES=ec2,s3,ebs \
+            --name localstack \
+            localstack/localstack:3.5
+
+      - name: Wait For LocalStack
+        run: |
+          sleep 15
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve
+
+      - name: Run Cost Janitor
+        run: |
+          cd janitor
+          python3 cost_janitor.py || true
+
+      - name: Upload JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-json
+          path: janitor/report.json
+
+      - name: Upload Markdown Summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: summary-markdown
+          path: janitor/summary.md
