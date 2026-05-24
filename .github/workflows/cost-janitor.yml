@@ -57,6 +57,7 @@ jobs:
           terraform apply -auto-approve
 
       - name: Run Cost Janitor
+        continue-on-error: true
         run: |
           cd janitor
           python3 cost_janitor.py
